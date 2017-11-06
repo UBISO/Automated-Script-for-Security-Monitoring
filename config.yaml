@@ -1,0 +1,19 @@
+output:
+ errorsto: somebody@example.com
+ errorsfrom: somebody@example.com
+ to: somebody@example.com
+ from: somebody@example.com
+
+smtp:
+ mailfrom: Malicious-login-alert
+ mailto: somebody@example.com
+ server: smtp.gmail.com  
+
+ldap:
+ server: ldap://ldap.buffalo.edu
+ binddn: o=University at Buffalo,c=us
+ base: o=University at Buffalo,c=us
+ filter: (&(uid=rms))
+
+tuning:
+ mph: 500
