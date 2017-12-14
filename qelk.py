@@ -50,7 +50,7 @@ def tthres(usern,dst,td,origin,destination,srcip,dstip):
 
 #Method to query elasticsearch and retreive the login information and check for malicious logins. Called from Main().
 def ELK():
-	es = Elasticsearch()
+	es = Elasticsearch("ses-arc-data.acsu.buffalo.edu:9200",timeout=500)
 	global userlist
 	userlist = defaultdict(list)
 
@@ -58,9 +58,9 @@ def ELK():
 	ltime = str(datetime.now())
 
 	if(inuser == "0"):
-		rs = es.search(index="radius-*",scroll = '2m',body = {"query": {"bool": {"must": [{"range": {"RADIUS.Acct-Timestamp": {"gte":gtime, "lte":ltime}}}]}}},sort = 'RADIUS.Acct-Username:desc',size=10000)
+		rs = es.search(index="radius-*",scroll = '2m',body = {"query": {"bool": {"must": [{"range": {"RADIUS.Acct-Timestamp.keyword": {"gte":gtime, "lte":ltime}}}]}}},sort = 'RADIUS.Acct-Username.keyword:desc',size=10000)
 	else:
-		rs = es.search(index="radius-*",scroll = '2m',body = {"query": {"bool": {"must": [{"match": {"RADIUS.Acct-Username": inuser}},{"range": {"RADIUS.Acct-Timestamp": {"gte":gtime, "lte":ltime}}}]}}},sort = 'RADIUS.Acct-Username:desc',size=10000)
+		rs = es.search(index="radius-*",scroll = '2m',body = {"query": {"bool": {"must": [{"match": {"RADIUS.Acct-Username.keyword": inuser}},{"range": {"RADIUS.Acct-Timestamp.keyword": {"gte":gtime, "lte":ltime}}}]}}},sort = 'RADIUS.Acct-Username.keyword:desc',size=10000)
 
 	v = []
 	sid = rs['_scroll_id']
@@ -83,15 +83,15 @@ def ELK():
 			try:
 				if(v[i].get('_source').get('RADIUS.Acct-Username') == v[j].get('_source').get('RADIUS.Acct-Username')):
 					if(v[i].get('_source').get('RADIUS.Acct-NAS-Port-Type') == "Virtual"):
-						location1 = [v[i].get('_source').get('Incoming').get('location')[0],v[i].get('_source').get('Incoming').get('location')[1]]
-						location2 = [v[j].get('_source').get('Incoming').get('location')[0],v[j].get('_source').get('Incoming').get('location')[1]]
+                                                location1 = [v[i].get('_source').get('Incoming').get('location').get('lat'),v[i].get('_source').get('Incoming').get('location').get('lon')]
+                                                location2 = [v[j].get('_source').get('Incoming').get('location').get('lat'),v[j].get('_source').get('Incoming').get('location').get('lon')]
 						orig = v[i].get('_source').get('Incoming').get('country_name') + "//"  + v[i].get('_source').get('Incoming').get('region_name') + "//"  + v[i].get('_source').get('Incoming').get('city_name')
 						origip = v[i].get('_source').get('Incoming').get('ip')
 						dest = v[j].get('_source').get('Incoming').get('country_name') + "//" + v[j].get('_source').get('Incoming').get('region_name') + "//" + v[j].get('_source').get('Incoming').get('city_name')
 						destip = v[j].get('_source').get('Incoming').get('ip')
 					else:
-						location1 = [v[i].get('_source').get('geoip').get('location')[0],v[i].get('_source').get('geoip').get('location')[1]]
-						location2 = [v[j].get('_source').get('geoip').get('location')[0],v[j].get('_source').get('geoip').get('location')[1]]
+                                                location1 = [v[i].get('_source').get('geoip').get('location').get('lat'),v[i].get('_source').get('geoip').get('location').get('lon')]
+                                                location2 = [v[j].get('_source').get('geoip').get('location').get('lat'),v[j].get('_source').get('geoip').get('location').get('lon')]
 						orig = v[i].get('_source').get('geoip').get('country_name') + "//" + v[i].get('_source').get('geoip').get('region_name') + "//" + v[i].get('_source').get('geoip').get('city_name')
 						origip = v[i].get('_source').get('geoip').get('ip')
 						dest = v[j].get('_source').get('geoip').get('country_name') + "//" + v[j].get('_source').get('geoip').get('region_name') + "//" + v[j].get('_source').get('geoip').get('city_name')
